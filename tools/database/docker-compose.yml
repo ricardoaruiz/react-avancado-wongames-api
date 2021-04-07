@@ -1,0 +1,12 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: wongames
+      POSTGRES_USER: wongames
+      POSTGRES_PASSWORD: wongames123
+    volumes:
+      - ../../../wongames-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

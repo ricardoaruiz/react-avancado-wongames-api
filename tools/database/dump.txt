@@ -1,0 +1,8 @@
+-- Instalação do postgresql client para ter os comandos necessários para gerar e restaurar dumps
+https://computingforgeeks.com/how-to-install-postgresql-13-on-ubuntu/
+
+-- Geração do DUMP
+PGPASSWORD=wongames123 pg_dump -Fc --no-acl --no-owner -h localhost -U wongames wongames > wongames-initial.dump
+
+-- Restauração do dump
+pg_restore --host localhost --port 5432 --username wongames --dbname wongames ./wongames-initial.dump
