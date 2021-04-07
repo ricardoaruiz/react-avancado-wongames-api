@@ -2,48 +2,48 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/delopers",
-      "handler": "deloper.find",
+      "path": "/developers",
+      "handler": "developer.find",
       "config": {
         "policies": []
       }
     },
     {
       "method": "GET",
-      "path": "/delopers/count",
-      "handler": "deloper.count",
+      "path": "/developers/count",
+      "handler": "developer.count",
       "config": {
         "policies": []
       }
     },
     {
       "method": "GET",
-      "path": "/delopers/:id",
-      "handler": "deloper.findOne",
+      "path": "/developers/:id",
+      "handler": "developer.findOne",
       "config": {
         "policies": []
       }
     },
     {
       "method": "POST",
-      "path": "/delopers",
-      "handler": "deloper.create",
+      "path": "/developers",
+      "handler": "developer.create",
       "config": {
         "policies": []
       }
     },
     {
       "method": "PUT",
-      "path": "/delopers/:id",
-      "handler": "deloper.update",
+      "path": "/developers/:id",
+      "handler": "developer.update",
       "config": {
         "policies": []
       }
     },
     {
       "method": "DELETE",
-      "path": "/delopers/:id",
-      "handler": "deloper.delete",
+      "path": "/developers/:id",
+      "handler": "developer.delete",
       "config": {
         "policies": []
       }

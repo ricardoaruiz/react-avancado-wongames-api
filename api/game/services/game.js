@@ -5,6 +5,7 @@
  * to customize this service
  */
 
+const slugify = require('slugify')
 const axios = require('axios');
 
 /**
@@ -25,13 +26,34 @@ const getGameInfo = async (slug) => {
   }
 }
 
+const createPublisher = async product => {
+  const { publisher: name } = product;
+  const foundPublisher = await strapi.services.publisher.findOne({ name })
+  if (!foundPublisher) {
+    await strapi.services.publisher.create({ name, slug: slugify(name).toLowerCase()  })
+  }
+}
+
+const createDeveloper = async product => {
+  const { developer: name } = product;
+  const foundDeveloper = await strapi.services.developer.findOne({ name })
+  if (!foundDeveloper) {
+    await strapi.services.developer.create({ name, slug: slugify(name).toLowerCase()  })
+  }
+}
+
 module.exports = {
   populate: async (params) => {
-    console.log('Chamando o serviço pouplate...')
+    console.log('Iniciando o serviço populate...')
 
     const url = `https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&sort=popularity`
     const {data: {products}} = await axios.get(url);
 
-    console.log('product ==>', await getGameInfo(products[0].slug))
+    for(const product of products) {
+      await createPublisher(product);
+      await createDeveloper(product);
+    }
+
+    console.log('Finalizando o serviço populate')
   }
 };
