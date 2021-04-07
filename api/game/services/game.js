@@ -5,4 +5,10 @@
  * to customize this service
  */
 
-module.exports = {};
+module.exports = {
+  populate: async (params) => {
+    console.log('Chamando o serviço pouplate...')
+    const cat = await strapi.services.category.find({ name: 'Action' })
+    console.log('Categoria', cat)
+  }
+};
