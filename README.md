@@ -35,6 +35,6 @@ yarn develop
 
 **Passo 5**
 
-Acessar a url http://localhost:1337/admin/auth/login e utilizar as credenciais abaixo para entrar na aplicação:
+Acessar a url http://localhost:1337/admin e utilizar as credenciais abaixo para entrar na aplicação:
 - **E-mail**: ricardo.almendro.ruiz@gmail.com
 - **Senha**: Wongames2021
