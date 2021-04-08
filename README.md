@@ -1,9 +1,13 @@
 # Strapi application
 
+<br/>
+
 ## Projeto criado utilizando
 
 https://strapi.io/documentation/developer-docs/latest/getting-started/quick-start.html
 
+
+<br/><br/>
 ## Ambiente de desenvolvimento
 
 ### Para iniciar o ambiente
@@ -38,3 +42,28 @@ yarn develop
 Acessar a url http://localhost:1337/admin e utilizar as credenciais abaixo para entrar na aplicação:
 - **E-mail**: ricardo.almendro.ruiz@gmail.com
 - **Senha**: Wongames2021
+
+
+
+<br/><br/>
+## Popular tabelas
+
+<br/>
+
+### Opção 1
+Podemos subir o dump "`wongames-populated.dump`" e já possuir muitos games, categorias, desenvolvedores, plataformas e publicadores cadastrados.
+
+Para essa opção será necessário também descompactar o arquivo "`uploads.zip`" que se encontra na pasta tools para dentro da pasta "`public`" para que as imagens referentes aos games existentes no dump estejam disponíveis
+
+<br/>
+
+### Opção 2
+Outra forma de popular as tabelas seria utilizando o endpoint "`/games/populate`" 
+
+Para isso é necessário liberar o acesso aos endpoints nas configurações de segurança do painel de controle do Strapi:
+- "populate" da collection "Game" na seção "Aplication"
+- "upload" na seção "Upload"
+
+```script
+curl -X POST http://localhost:1337/games/populate
+```
