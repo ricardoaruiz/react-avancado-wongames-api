@@ -7,6 +7,7 @@
 
 const slugify = require('slugify')
 const axios = require('axios');
+const qs = require('querystring')
 
 const Exception = (e) => {
   return { e, data: e.data && e.data.errors && e.data.errors };
@@ -166,7 +167,13 @@ module.exports = {
   populate: async (params) => {
     console.log('Starting populate collections...')
 
-    const url = `https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&sort=popularity`
+    const options = {
+      sort: 'popularity',
+      page: 1,
+      ...params
+    }
+
+    const url = `https://www.gog.com/games/ajax/filtered?mediaType=game&${qs.stringify(options)}`
     const {data: {products}} = await axios.get(url);
 
     for(const product of products) {
