@@ -26,34 +26,45 @@ const getGameInfo = async (slug) => {
   }
 }
 
-const createPublisher = async product => {
-  const { publisher: name } = product;
-  const foundPublisher = await strapi.services.publisher.findOne({ name })
-  if (!foundPublisher) {
-    await strapi.services.publisher.create({ name, slug: slugify(name).toLowerCase()  })
-  }
+/**
+ * Check if exist an entry by name
+ * @param {*} name
+ * @param {*} entityName
+ * @returns true/false
+ */
+const hasEntryWithName = async (name, entityName) => {
+  const foundItem = await strapi.services[entityName].findOne({ name })
+  return foundItem !== null
 }
 
-const createDeveloper = async product => {
-  const { developer: name } = product;
-  const foundDeveloper = await strapi.services.developer.findOne({ name })
-  if (!foundDeveloper) {
-    await strapi.services.developer.create({ name, slug: slugify(name).toLowerCase()  })
+/**
+ * Create a entry
+ * @param {*} product
+ */
+const createEntry = async (data, entityName) => {
+  const hasEntry = await hasEntryWithName(data.name, entityName)
+  if (!hasEntry) {
+    await strapi.services[entityName].create(data)
   }
 }
 
 module.exports = {
+  /**
+   * Populate all collections
+   * @param {*} params
+   */
   populate: async (params) => {
-    console.log('Iniciando o serviço populate...')
+    console.log('Starting populate collections...')
 
     const url = `https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&sort=popularity`
     const {data: {products}} = await axios.get(url);
 
     for(const product of products) {
-      await createPublisher(product);
-      await createDeveloper(product);
+      await createEntry({ name: product.publisher, slug: slugify(product.publisher, { lower: true }) }, 'publisher');
+      await createEntry({ name: product.category, slug: slugify(product.category, { lower: true }) }, 'category');
+      await createEntry({ name: product.developer, slug: slugify(product.developer, { lower: true }) }, 'developer');
     }
 
-    console.log('Finalizando o serviço populate')
+    console.log('Finishing populate collections.')
   }
 };
