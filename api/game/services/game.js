@@ -8,21 +8,67 @@
 const slugify = require('slugify')
 const axios = require('axios');
 
+const Exception = (e) => {
+  return { e, data: e.data && e.data.errors && e.data.errors };
+}
+
+const timeout = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Set a image on a game
+ * @param {*} param0
+ */
+const setImage = async ({ image, game, field = "cover" }) => {
+  try {
+    const url = `https:${image}_bg_crop_1680x655.jpg`;
+    const { data } = await axios.get(url, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(data, "base64");
+
+    const FormData = require("form-data");
+    const formData = new FormData();
+
+    formData.append("refId", game.id);
+    formData.append("ref", "game");
+    formData.append("field", field);
+    formData.append("files", buffer, { filename: `${game.slug}.jpg` });
+
+    console.info(`Uploading ${field} image: ${game.slug}.jpg`);
+    console.info(`http://${strapi.config.host}:${strapi.config.port}/upload`);
+
+    await axios({
+      method: "POST",
+      url: `http://${strapi.config.host}:${strapi.config.port}/upload`,
+      data: formData,
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${formData._boundary}`,
+      },
+    });
+  } catch(e) {
+    console.log("setImage", Exception(e));
+  }
+}
+
 /**
  * Get Game info from GOG page game detail
  * @param {*} slug
  */
 const getGameInfo = async (slug) => {
-  const jsdom = require('jsdom');
-  const { JSDOM } = jsdom;
-  const body = await axios.get(`https://www.gog.com/game/${slug}`);
-  const dom = new JSDOM(body.data);
-  const description = dom.window.document.querySelector('.description')
+  try {
+    const jsdom = require('jsdom');
+    const { JSDOM } = jsdom;
+    const body = await axios.get(`https://www.gog.com/game/${slug}`);
+    const dom = new JSDOM(body.data);
+    const description = dom.window.document.querySelector('.description')
 
-  return {
-    rating: 'BR0',
-    short_description: description.textContent.slice(0, 160),
-    description: description.innerHTML
+    return {
+      rating: 'BR0',
+      short_description: description.textContent.slice(0, 160),
+      description: description.innerHTML
+    }
+  } catch(e) {
+    console.log("getGameInfo", Exception(e));
   }
 }
 
@@ -41,9 +87,13 @@ const getEntryByName = async (name, entityName) => {
  * @param {*} name
  */
 const createEntry = async (name, entityName) => {
-  const foundEntry = await getEntryByName(name, entityName)
-  if (!foundEntry) {
-    await strapi.services[entityName].create({ name, slug: slugify(name, { lower: true }) })
+  try {
+    const foundEntry = await getEntryByName(name, entityName)
+    if (!foundEntry) {
+      await strapi.services[entityName].create({ name, slug: slugify(name, { lower: true }) })
+    }
+  } catch(e) {
+    console.log("createEntry", Exception(e));
   }
 }
 
@@ -62,28 +112,48 @@ const createEntries = async (values, entityName) => {
  * @param {*} product
  */
 const createGame = async product => {
-  const foundEntry = await getEntryByName(product.title, 'game');
+  try {
+    const foundEntry = await getEntryByName(product.title, 'game');
 
-  if(!foundEntry) {
-    console.info(`Creating: ${product.title}`)
-    const { rating, short_description, description } = await getGameInfo(product.slug);
-    const { title: name, slug, price: { amount: price }, globalReleaseDate, genres, supportedOperatingSystems, publisher, developer } = product;
+    if(!foundEntry) {
+      console.info(`Creating: ${product.title}`)
+      const { rating, short_description, description } = await getGameInfo(product.slug);
+      const {
+        title: name,
+        slug, price: { amount: price },
+        globalReleaseDate,
+        genres,
+        supportedOperatingSystems,
+        publisher,
+        developer,
+        image,
+        gallery,
+      } = product;
 
-    const game = {
-      name,
-      slug: slug.replace(/_/g, '-'),
-      short_description,
-      description,
-      price,
-      release_date: new Date(Number(globalReleaseDate) * 1000).toISOString(),
-      rating,
-      categories: await Promise.all(genres.map(genre => getEntryByName(genre, 'category'))),
-      publisher: await getEntryByName(publisher, 'publisher'),
-      developers: [await getEntryByName(developer, 'developer')],
-      platforms: await Promise.all(supportedOperatingSystems.map(platform => getEntryByName(platform, 'platform')))
-    };
+      const game = {
+        name,
+        slug: slug.replace(/_/g, '-'),
+        short_description,
+        description,
+        price,
+        release_date: new Date(Number(globalReleaseDate) * 1000).toISOString(),
+        rating,
+        categories: await Promise.all(genres.map(genre => getEntryByName(genre, 'category'))),
+        publisher: await getEntryByName(publisher, 'publisher'),
+        developers: [await getEntryByName(developer, 'developer')],
+        platforms: await Promise.all(supportedOperatingSystems.map(platform => getEntryByName(platform, 'platform')))
+      };
 
-    await strapi.services.game.create(game);
+      const createdGame = await strapi.services.game.create(game);
+      await setImage({image, game: createdGame})
+      await Promise.all(
+        gallery.slice(0, 5).map(url => setImage({ image: url, game: createdGame, field: 'gallery'}))
+      );
+
+      await timeout(2000);
+    }
+  } catch(e) {
+    console.log("createGame", Exception(e));
   }
 
 }
