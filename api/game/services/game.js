@@ -32,20 +32,60 @@ const getGameInfo = async (slug) => {
  * @param {*} entityName
  * @returns true/false
  */
-const hasEntryWithName = async (name, entityName) => {
-  const foundItem = await strapi.services[entityName].findOne({ name })
-  return foundItem !== null
+const getEntryByName = async (name, entityName) => {
+  return strapi.services[entityName].findOne({ name })
 }
 
 /**
  * Create a entry
+ * @param {*} name
+ */
+const createEntry = async (name, entityName) => {
+  const foundEntry = await getEntryByName(name, entityName)
+  if (!foundEntry) {
+    await strapi.services[entityName].create({ name, slug: slugify(name, { lower: true }) })
+  }
+}
+
+/**
+ * Create many entries
+ * @param {*} values
+ */
+const createEntries = async (values, entityName) => {
+  for(const value of values) {
+    await createEntry(value, entityName)
+  }
+}
+
+/**
+ * Create a game
  * @param {*} product
  */
-const createEntry = async (data, entityName) => {
-  const hasEntry = await hasEntryWithName(data.name, entityName)
-  if (!hasEntry) {
-    await strapi.services[entityName].create(data)
+const createGame = async product => {
+  const foundEntry = await getEntryByName(product.title, 'game');
+
+  if(!foundEntry) {
+    console.info(`Creating: ${product.title}`)
+    const { rating, short_description, description } = await getGameInfo(product.slug);
+    const { title: name, slug, price: { amount: price }, globalReleaseDate, genres, supportedOperatingSystems, publisher, developer } = product;
+
+    const game = {
+      name,
+      slug: slug.replace(/_/g, '-'),
+      short_description,
+      description,
+      price,
+      release_date: new Date(Number(globalReleaseDate) * 1000).toISOString(),
+      rating,
+      categories: await Promise.all(genres.map(genre => getEntryByName(genre, 'category'))),
+      publisher: await getEntryByName(publisher, 'publisher'),
+      developers: [await getEntryByName(developer, 'developer')],
+      platforms: await Promise.all(supportedOperatingSystems.map(platform => getEntryByName(platform, 'platform')))
+    };
+
+    await strapi.services.game.create(game);
   }
+
 }
 
 module.exports = {
@@ -60,9 +100,11 @@ module.exports = {
     const {data: {products}} = await axios.get(url);
 
     for(const product of products) {
-      await createEntry({ name: product.publisher, slug: slugify(product.publisher, { lower: true }) }, 'publisher');
-      await createEntry({ name: product.category, slug: slugify(product.category, { lower: true }) }, 'category');
-      await createEntry({ name: product.developer, slug: slugify(product.developer, { lower: true }) }, 'developer');
+      await createEntries(product.genres, 'category');
+      await createEntry(product.publisher, 'publisher');
+      await createEntry(product.developer, 'developer');
+      await createEntries(product.supportedOperatingSystems, 'platform');
+      await createGame(product);
     }
 
     console.log('Finishing populate collections.')
