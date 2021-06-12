@@ -67,3 +67,8 @@ Para isso é necessário liberar o acesso aos endpoints nas configurações de s
 ```script
 curl -X POST http://localhost:1337/games/populate
 ```
+
+Para gerar dados com jogos a serem lançados o comando será
+```script
+curl -X POST http://localhost:1337/games/populate\?availability\=coming\&mediaType\=game\&page\=1\&sort\=popularity
+```
